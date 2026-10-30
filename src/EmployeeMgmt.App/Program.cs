@@ -1,140 +1,84 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using EmployeeMgmt.Core;
+using System.Linq;
 
 namespace EmployeeMgmt.App;
-
-public sealed class Employee
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string? Department { get; set; }
-    public decimal Salary { get; set; }
-    public DateTime HireDate { get; set; }
-}
-
-public sealed class EmployeeRepository
-{
-    private readonly List<Employee> _employees = new();
-
-    public EmployeeRepository()
-    {
-        Seed();
-    }
-
-    private void Seed()
-    {
-        _employees.Add(new Employee { Id = 1, Name = "Alice", Department = "Engineering", Salary = 90000m, HireDate = new DateTime(2020, 3, 15) });
-        _employees.Add(new Employee { Id = 2, Name = "Bob", Department = "HR", Salary = 65000m, HireDate = new DateTime(2019, 7, 1) });
-        _employees.Add(new Employee { Id = 3, Name = "Carol", Department = "Engineering", Salary = 95000m, HireDate = new DateTime(2021, 1, 10) });
-        _employees.Add(new Employee { Id = 4, Name = "David", Department = "Marketing", Salary = 70000m, HireDate = new DateTime(2018, 11, 5) });
-        _employees.Add(new Employee { Id = 5, Name = "Eve", Department = "Sales", Salary = 72000m, HireDate = new DateTime(2022, 2, 20) });
-    }
-
-    public void AddEmployee(Employee emp)
-    {
-        if (string.IsNullOrWhiteSpace(emp.Name))
-        {
-            throw new ArgumentException("Employee name cannot be empty.", nameof(emp.Name));
-        }
-
-        if (_employees.Exists(e => e.Id == emp.Id))
-        {
-            throw new InvalidOperationException($"Duplicate employee ID: {emp.Id}");
-        }
-
-        _employees.Add(emp);
-    }
-
-    public Employee? FindById(int id)
-    {
-        foreach (var emp in _employees)
-        {
-            if (emp.Id == id)
-            {
-                return emp;
-            }
-        }
-        return null;
-    }
-
-    public string PrintAll()
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("Employee Records:");
-        sb.AppendLine(new string('-', 40));
-
-        foreach (var emp in _employees)
-        {
-            sb.AppendLine($"Id={emp.Id}, Name={emp.Name}, Department={emp.Department ?? "N/A"}, Salary={emp.Salary:C}, HireDate={emp.HireDate:yyyy-MM-dd}");
-        }
-
-        sb.AppendLine($"Total count: {_employees.Count}");
-        return sb.ToString();
-    }
-
-    public decimal AverageSalary()
-    {
-        if (_employees.Count == 0)
-        {
-            throw new InvalidOperationException("No employees to compute average salary.");
-        }
-
-        decimal sum = 0m;
-        foreach (var emp in _employees)
-        {
-            sum += emp.Salary;
-        }
-
-        return sum / _employees.Count;
-    }
-}
 
 class Program
 {
     static void Main(string[] args)
     {
-        var repo = new EmployeeRepository();
-
-        Console.WriteLine(repo.PrintAll());
-
-        Console.WriteLine($"Average Salary: {repo.AverageSalary():C}");
-
-        Console.WriteLine("--- FindById tests ---");
-        var found = repo.FindById(3);
-        Console.WriteLine(found is not null ? $"Found: {found.Name}" : "Not found");
-        var missing = repo.FindById(99);
-        Console.WriteLine(missing is not null ? $"Found: {missing.Name}" : "Not found (nullable)");
-
-        Console.WriteLine("--- AddEmployee tests ---");
+        IEmployeeRepository repo = new InMemoryEmployeeRepository();
+        
+        // Seed with different employee types (polymorphism)
+        var emp1 = new Contractor(1, "Alice", 75m, "TechStaff", 12);
+        var emp2 = new Contractor(2, "Bob", 80m, "DevPro", 6);
+        var manager = new Manager(3, "Carol", 120000m, 15000m);
+        var emp3 = new Contractor(4, "David", 65m, "TechStaff", 12);
+        var emp4 = new Contractor(5, "Eve", 70m, "DevPro", 9);
+        
+        manager.AddToTeam(emp1);
+        manager.AddToTeam(emp2);
+        
+        repo.Add(emp1);
+        repo.Add(emp2);
+        repo.Add(manager);
+        repo.Add(emp3);
+        repo.Add(emp4);
+        
+        // Demonstrate polymorphism
+        Console.WriteLine("=== Polymorphism Demo (Describe()) ===");
+        foreach (var e in repo.GetAll())
+        {
+            Console.WriteLine(e.Describe());
+        }
+        
+        // Use record DTO
+        Console.WriteLine("\n=== EmployeeSummary Records ===");
+        var summaries = repo.GetAll()
+            .Select(e => new EmployeeSummary(
+                e.Id, 
+                e.Name, 
+                e.GetType().Name, 
+                e.Salary))
+            .ToList();
+        
+        foreach (var s in summaries)
+        {
+            Console.WriteLine($"Summary: {s}");
+        }
+        
+        // Demonstrate encapsulation - Manager's Bonus is private set
+        Console.WriteLine($"\n=== Manager Details ===");
+        Console.WriteLine($"Manager {manager.Name} has {manager.Team.Count} team members, Bonus: {manager.Bonus:C}");
+        
+        // Demonstrate Department
+        Console.WriteLine("\n=== Department Demo ===");
+        var engDept = new Department(1, "Engineering");
+        engDept.AddEmployee(emp1);
+        engDept.AddEmployee(emp2);
+        engDept.AddEmployee(manager);
+        Console.WriteLine(engDept.Describe());
+        
+        // Exception handling
+        Console.WriteLine("\n=== Exception Handling ===");
         try
         {
-            repo.AddEmployee(new Employee { Id = 1, Name = "Duplicate", Department = "IT", Salary = 50000m, HireDate = DateTime.Today });
+            repo.Add(new Contractor(1, "Duplicate", 75m, "X", 12));
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[Duplicate ID] Caught: {ex.Message}");
+            Console.WriteLine($"[Duplicate] Caught: {ex.Message}");
         }
-
+        
         try
         {
-            repo.AddEmployee(new Employee { Id = 6, Name = "", Department = "IT", Salary = 50000m, HireDate = DateTime.Today });
+            var newMgr = new Manager(6, "", 50000m, 5000m);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[Empty Name] Caught: {ex.Message}");
         }
-
-        try
-        {
-            repo.AddEmployee(new Employee { Id = 6, Name = "Frank", Department = "IT", Salary = 50000m, HireDate = DateTime.Today });
-            Console.WriteLine("Added Frank successfully.");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[Add Frank] Caught: {ex.Message}");
-        }
-
-        Console.WriteLine(repo.PrintAll());
+        
+        Console.WriteLine($"\nTotal employees in repo: {repo.Count}");
     }
 }

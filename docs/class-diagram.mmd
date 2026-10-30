@@ -1,0 +1,71 @@
+classDiagram
+    class Employee {
+        <<abstract>>
+        +int Id
+        +string Name
+        +decimal Salary
+        #Employee(int, string, decimal)
+        +Describe() string
+    }
+    
+    class Manager {
+        <<sealed>>
+        +List~Employee~ Team
+        +decimal Bonus
+        +Manager(int, string, decimal, decimal)
+        +AddToTeam(Employee)
+        +Describe() string
+    }
+    
+    class Contractor {
+        <<sealed>>
+        +string Agency
+        +int ContractMonths
+        +Contractor(int, string, decimal, string, int)
+        +Describe() string
+    }
+    
+    class Department {
+        <<sealed>>
+        +int Id
+        +string Name
+        -List~Employee~ _employees
+        +IReadOnlyList~Employee~ Employees
+        +Department(int, string)
+        +AddEmployee(Employee)
+        +Describe() string
+    }
+    
+    class IEmployeeRepository {
+        <<interface>>
+        +Add(Employee)
+        +GetById(int) Employee?
+        +GetAll() IEnumerable~Employee~
+        +Remove(int)
+        +Count int
+    }
+    
+    class InMemoryEmployeeRepository {
+        <<sealed>>
+        -List~Employee~ _employees
+        +Count int
+        +Add(Employee)
+        +GetById(int) Employee?
+        +GetAll() IEnumerable~Employee~
+        +Remove(int)
+    }
+    
+    class EmployeeSummary {
+        <<record>>
+        +int Id
+        +string Name
+        +string Role
+        +decimal Salary
+    }
+    
+    Employee <|-- Manager : inheritance
+    Employee <|-- Contractor : inheritance
+    IEmployeeRepository <|.. InMemoryEmployeeRepository : implements
+    Manager o-- Employee : composition (Team)
+    Department o-- Employee : aggregation
+    InMemoryEmployeeRepository o-- Employee : composition
