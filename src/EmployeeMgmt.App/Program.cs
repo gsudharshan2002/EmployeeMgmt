@@ -5,9 +5,10 @@ namespace EmployeeMgmt.App;
 
 class Program
 {
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
-        IEmployeeRepository repo = new InMemoryEmployeeRepository();
+        var inMemoryRepo = new InMemoryEmployeeRepository();
+        IEmployeeRepository repo = inMemoryRepo;
         
         // Seed with different employee types (polymorphism)
         var emp1 = new Contractor(1, "Alice", 75m, "TechStaff", 12);
@@ -80,5 +81,17 @@ class Program
         }
         
         Console.WriteLine($"\nTotal employees in repo: {repo.Count}");
+
+        Console.WriteLine("\n=== Async + Cancellation Demo ===");
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(300));
+            var loaded = await inMemoryRepo.LoadEmployeesAsync(cts.Token);
+            Console.WriteLine($"Loaded {loaded.Count} employees asynchronously.");
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("Operation was cancelled due to timeout.");
+        }
     }
 }

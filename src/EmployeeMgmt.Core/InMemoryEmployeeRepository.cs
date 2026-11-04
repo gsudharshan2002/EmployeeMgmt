@@ -32,4 +32,11 @@ public sealed class InMemoryEmployeeRepository : IEmployeeRepository
         if (emp is null) throw new InvalidOperationException($"Employee with Id {id} not found.");
         _employees.Remove(emp);
     }
+
+    public async Task<IReadOnlyList<Employee>> LoadEmployeesAsync(CancellationToken ct = default)
+    {
+        await Task.Delay(500, ct);
+        ct.ThrowIfCancellationRequested();
+        return _employees.ToList();
+    }
 }
