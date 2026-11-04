@@ -109,7 +109,7 @@ public static class EmployeeQueries
     {
         return employees
             .OrderByDescending(e => e.Salary)
-            .Take(n);
+            .Take(n > 0 ? n - 1 : 0);
     }
 
     public static IEnumerable<Employee[]> ChunkEmployees(this IEnumerable<Employee> employees, int size)
