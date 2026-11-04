@@ -107,9 +107,10 @@ public static class EmployeeQueries
 
     public static IEnumerable<Employee> GetTopN(this IEnumerable<Employee> employees, int n)
     {
+        if (n <= 0) return Enumerable.Empty<Employee>();
         return employees
             .OrderByDescending(e => e.Salary)
-            .Take(n > 0 ? n - 1 : 0);
+            .Take(n);
     }
 
     public static IEnumerable<Employee[]> ChunkEmployees(this IEnumerable<Employee> employees, int size)
