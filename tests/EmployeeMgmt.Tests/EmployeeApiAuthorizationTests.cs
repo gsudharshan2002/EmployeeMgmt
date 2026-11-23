@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using EmployeeMgmt.Api.Controllers;
+using EmployeeMgmt.Application.Departments;
 using EmployeeMgmt.Application.Employees;
 using EmployeeMgmt.Infrastructure.Data;
 using Microsoft.AspNetCore.Hosting;
@@ -25,10 +26,33 @@ public sealed class EmployeeApiAuthorizationTests
         }
 
         using var client = factory.CreateClient();
+        var invalidEmployee = await client.PostAsJsonAsync("/api/employees", new EmployeeRequest
+        {
+            Name = "",
+            Salary = -1m
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, invalidEmployee.StatusCode);
+
+        var invalidQuery = await client.GetAsync("/api/employees?pageSize=101");
+        Assert.Equal(HttpStatusCode.BadRequest, invalidQuery.StatusCode);
+        Assert.StartsWith(
+            "application/problem+json",
+            invalidQuery.Content.Headers.ContentType?.ToString(),
+            StringComparison.OrdinalIgnoreCase);
+
+        var departmentResponse = await client.PostAsJsonAsync("/api/departments", new DepartmentRequest
+        {
+            Name = "Engineering"
+        });
+        Assert.Equal(HttpStatusCode.Created, departmentResponse.StatusCode);
+        var department = await departmentResponse.Content.ReadFromJsonAsync<DepartmentDto>();
+        Assert.NotNull(department);
+
         var createResponse = await client.PostAsJsonAsync("/api/employees", new EmployeeRequest
         {
             Name = "Alice",
-            Salary = 85000m
+            Salary = 85000m,
+            DepartmentId = department.Id
         });
         Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
         var employee = await createResponse.Content.ReadFromJsonAsync<EmployeeDto>();
@@ -48,6 +72,14 @@ public sealed class EmployeeApiAuthorizationTests
         authorizedRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
         var authorized = await client.SendAsync(authorizedRequest);
         Assert.Equal(HttpStatusCode.NoContent, authorized.StatusCode);
+
+        var missingEmployee = await client.GetAsync($"/api/employees/{employee.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, missingEmployee.StatusCode);
+
+        using var departmentDeleteRequest = new HttpRequestMessage(HttpMethod.Delete, $"/api/departments/{department.Id}");
+        departmentDeleteRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+        var departmentDeleted = await client.SendAsync(departmentDeleteRequest);
+        Assert.Equal(HttpStatusCode.NoContent, departmentDeleted.StatusCode);
     }
 
     [Fact]

@@ -1,4 +1,4 @@
-@baseUrl = https://localhost:7001
+@baseUrl = http://localhost:5080
 @token = {{employeeMgmtToken}}
 
 ### Create a department (201 Created)

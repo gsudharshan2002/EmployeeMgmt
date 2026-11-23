@@ -63,6 +63,8 @@ public sealed class EmployeeService(IEmployeeStore store, IOptions<PaginationOpt
             throw new ArgumentException("Page must be greater than zero.", nameof(query));
         if (query.PageSize < 1 || query.PageSize > _pagination.MaxPageSize)
             throw new ArgumentException($"Page size must be between 1 and {_pagination.MaxPageSize}.", nameof(query));
+        if ((long)(query.Page - 1) * query.PageSize > int.MaxValue)
+            throw new ArgumentException("Page is too large.", nameof(query));
         if (query.SortBy is not ("name" or "salary" or "id"))
             throw new ArgumentException("SortBy must be name, salary, or id.", nameof(query));
     }

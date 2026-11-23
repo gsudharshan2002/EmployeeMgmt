@@ -1,0 +1,8 @@
+flowchart TD
+    Client --> Api[EmployeeMgmt.Api<br/>Controllers, middleware, JWT]
+    Api --> Application[EmployeeMgmt.Application<br/>Services, contracts, store interfaces]
+    Api --> Infrastructure[EmployeeMgmt.Infrastructure<br/>EF Core store, DbContext, migrations]
+    Infrastructure --> Application
+    Application --> Core[EmployeeMgmt.Core<br/>Employee and Department]
+    Infrastructure --> Core
+    Infrastructure --> Database[(SQLite)]
