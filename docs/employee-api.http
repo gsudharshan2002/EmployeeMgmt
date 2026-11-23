@@ -1,4 +1,5 @@
 @baseUrl = https://localhost:7001
+@token = {{employeeMgmtToken}}
 
 ### Create a department (201 Created)
 POST {{baseUrl}}/api/departments
@@ -32,3 +33,19 @@ Content-Type: application/json
   "name": "",
   "salary": -1
 }
+
+### Request a JWT (configure demo credentials using environment variables)
+POST {{baseUrl}}/api/auth/token
+Content-Type: application/json
+
+{
+  "username": "{{employeeMgmtUsername}}",
+  "password": "{{employeeMgmtPassword}}"
+}
+
+### Delete without a token (401 Unauthorized)
+DELETE {{baseUrl}}/api/employees/1
+
+### Delete with an Employee-role token (403 Forbidden)
+DELETE {{baseUrl}}/api/employees/1
+Authorization: Bearer {{token}}

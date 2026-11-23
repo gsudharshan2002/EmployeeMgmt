@@ -5,6 +5,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.15" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <ProjectReference Include="..\EmployeeMgmt.Application\EmployeeMgmt.Application.csproj" />
     <ProjectReference Include="..\EmployeeMgmt.Infrastructure\EmployeeMgmt.Infrastructure.csproj" />
