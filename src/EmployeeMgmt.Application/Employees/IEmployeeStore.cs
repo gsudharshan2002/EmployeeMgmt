@@ -4,7 +4,7 @@ namespace EmployeeMgmt.Application.Employees;
 
 public interface IEmployeeStore
 {
-    Task<IReadOnlyList<Employee>> GetAllAsync(CancellationToken cancellationToken);
+    Task<PagedResult<Employee>> GetAllAsync(EmployeeQuery query, CancellationToken cancellationToken);
     Task<Employee?> GetByIdAsync(int id, CancellationToken cancellationToken);
     Task AddAsync(Employee employee, CancellationToken cancellationToken);
     Task UpdateAsync(Employee employee, CancellationToken cancellationToken);

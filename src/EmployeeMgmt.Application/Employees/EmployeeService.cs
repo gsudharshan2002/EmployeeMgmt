@@ -10,24 +10,9 @@ public sealed class EmployeeService(IEmployeeStore store, IOptions<PaginationOpt
     public async Task<PagedResult<EmployeeDto>> GetAllAsync(EmployeeQuery query, CancellationToken cancellationToken)
     {
         ValidateQuery(query);
-        var employees = (await store.GetAllAsync(cancellationToken)).AsEnumerable();
-
-        if (!string.IsNullOrWhiteSpace(query.Search))
-            employees = employees.Where(employee => employee.Name.Contains(query.Search, StringComparison.OrdinalIgnoreCase));
-        if (query.DepartmentId is int departmentId)
-            employees = employees.Where(employee => employee.DepartmentId == departmentId);
-
-        employees = query.SortBy.ToLowerInvariant() switch
-        {
-            "salary" => query.Descending ? employees.OrderByDescending(employee => employee.Salary).ThenBy(employee => employee.Id) : employees.OrderBy(employee => employee.Salary).ThenBy(employee => employee.Id),
-            "id" => query.Descending ? employees.OrderByDescending(employee => employee.Id) : employees.OrderBy(employee => employee.Id),
-            _ => query.Descending ? employees.OrderByDescending(employee => employee.Name).ThenBy(employee => employee.Id) : employees.OrderBy(employee => employee.Name).ThenBy(employee => employee.Id)
-        };
-
-        var totalCount = employees.Count();
-        var page = employees.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToList();
-        var items = await Task.WhenAll(page.Select(employee => ToDto(employee, cancellationToken)));
-        return new PagedResult<EmployeeDto>(items, query.Page, query.PageSize, totalCount);
+        var result = await store.GetAllAsync(query, cancellationToken);
+        var items = await Task.WhenAll(result.Items.Select(employee => ToDto(employee, cancellationToken)));
+        return new PagedResult<EmployeeDto>(items, result.Page, result.PageSize, result.TotalCount);
     }
 
     public async Task<EmployeeDto?> GetByIdAsync(int id, CancellationToken cancellationToken)
@@ -66,9 +51,9 @@ public sealed class EmployeeService(IEmployeeStore store, IOptions<PaginationOpt
 
     private async Task<EmployeeDto> ToDto(Employee employee, CancellationToken cancellationToken)
     {
-        var department = employee.DepartmentId is int id
+        var department = employee.Department ?? (employee.DepartmentId is int id
             ? await store.GetDepartmentAsync(id, cancellationToken)
-            : null;
+            : null);
         return new EmployeeDto(employee.Id, employee.Name, employee.Salary, employee.DepartmentId, department?.Name);
     }
 

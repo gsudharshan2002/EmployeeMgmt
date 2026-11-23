@@ -41,13 +41,17 @@ public sealed class ExceptionHandlingMiddleware(
 
         context.Response.Clear();
         context.Response.StatusCode = status;
-        context.Response.ContentType = "application/problem+json";
-        await context.Response.WriteAsJsonAsync(new ProblemDetails
+        var problemDetailsService = context.RequestServices.GetRequiredService<IProblemDetailsService>();
+        await problemDetailsService.WriteAsync(new ProblemDetailsContext
         {
-            Status = status,
-            Title = title,
-            Detail = detail,
-            Instance = context.Request.Path
-        }, cancellationToken: context.RequestAborted);
+            HttpContext = context,
+            ProblemDetails = new ProblemDetails
+            {
+                Status = status,
+                Title = title,
+                Detail = detail,
+                Instance = context.Request.Path
+            }
+        });
     }
 }

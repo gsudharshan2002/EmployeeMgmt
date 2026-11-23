@@ -9,10 +9,23 @@ public sealed class InMemoryEmployeeStore : IEmployeeStore
     private int _nextEmployeeId = 1;
     private int _nextDepartmentId = 1;
 
-    public Task<IReadOnlyList<Employee>> GetAllAsync(CancellationToken cancellationToken)
+    public Task<PagedResult<Employee>> GetAllAsync(EmployeeQuery query, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult<IReadOnlyList<Employee>>(_employees.Values.ToList());
+        IEnumerable<Employee> employees = _employees.Values;
+        if (!string.IsNullOrWhiteSpace(query.Search))
+            employees = employees.Where(employee => employee.Name.Contains(query.Search, StringComparison.OrdinalIgnoreCase));
+        if (query.DepartmentId is int departmentId)
+            employees = employees.Where(employee => employee.DepartmentId == departmentId);
+        employees = query.SortBy.ToLowerInvariant() switch
+        {
+            "salary" => query.Descending ? employees.OrderByDescending(employee => employee.Salary).ThenBy(employee => employee.Id) : employees.OrderBy(employee => employee.Salary).ThenBy(employee => employee.Id),
+            "id" => query.Descending ? employees.OrderByDescending(employee => employee.Id) : employees.OrderBy(employee => employee.Id),
+            _ => query.Descending ? employees.OrderByDescending(employee => employee.Name).ThenBy(employee => employee.Id) : employees.OrderBy(employee => employee.Name).ThenBy(employee => employee.Id)
+        };
+        var totalCount = employees.Count();
+        var items = employees.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToList();
+        return Task.FromResult(new PagedResult<Employee>(items, query.Page, query.PageSize, totalCount));
     }
 
     public Task<Employee?> GetByIdAsync(int id, CancellationToken cancellationToken)
@@ -83,7 +96,7 @@ public sealed class InMemoryEmployeeStore : IEmployeeStore
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (_employees.Values.Any(employee => employee.DepartmentId == id))
-            return Task.FromResult(false);
+            throw new InvalidOperationException($"Department {id} still has employees.");
         return Task.FromResult(_departments.Remove(id));
     }
 }

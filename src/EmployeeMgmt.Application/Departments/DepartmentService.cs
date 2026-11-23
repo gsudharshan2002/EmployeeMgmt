@@ -31,8 +31,13 @@ public sealed class DepartmentService(IEmployeeStore store) : IDepartmentService
         return ToDto(department);
     }
 
-    public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken) =>
-        await store.DeleteDepartmentAsync(id, cancellationToken);
+    public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken)
+    {
+        var department = await store.GetDepartmentAsync(id, cancellationToken);
+        if (department is null)
+            return false;
+        return await store.DeleteDepartmentAsync(id, cancellationToken);
+    }
 
     private static DepartmentDto ToDto(Department department) =>
         new(department.Id, department.Name, department.Employees.Count);

@@ -1,11 +1,14 @@
 using EmployeeMgmt.Application.Employees;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace EmployeeMgmt.Api.Controllers;
 
 [ApiController]
 [Route("api/employees")]
-public sealed class EmployeesController(IEmployeeService service) : ControllerBase
+public sealed class EmployeesController(
+    IEmployeeService service,
+    IOptions<PaginationOptions> paginationOptions) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(PagedResult<EmployeeDto>), StatusCodes.Status200OK)]
@@ -15,11 +18,12 @@ public sealed class EmployeesController(IEmployeeService service) : ControllerBa
         [FromQuery] string sortBy = "name",
         [FromQuery] bool descending = false,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
+        [FromQuery] int? pageSize = null,
         CancellationToken cancellationToken = default)
     {
         var result = await service.GetAllAsync(
-            new EmployeeQuery(search, departmentId, sortBy, descending, page, pageSize), cancellationToken);
+            new EmployeeQuery(search, departmentId, sortBy, descending, page, pageSize ?? paginationOptions.Value.DefaultPageSize),
+            cancellationToken);
         return Ok(result);
     }
 

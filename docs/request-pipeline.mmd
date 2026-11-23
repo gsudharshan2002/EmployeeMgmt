@@ -1,6 +1,6 @@
 flowchart LR
-    Client --> ExceptionHandlingMiddleware
-    ExceptionHandlingMiddleware --> RequestLoggingMiddleware
+    Client --> RequestLoggingMiddleware
+    RequestLoggingMiddleware --> ExceptionHandlingMiddleware
     RequestLoggingMiddleware --> Routing
     Routing --> Authentication
     Authentication --> Authorization

@@ -19,7 +19,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\EmployeeMgmt.Application\EmployeeMgmt.Application.csproj" />
     <ProjectReference Include="..\..\src\EmployeeMgmt.Core\EmployeeMgmt.Core.csproj" />
+    <ProjectReference Include="..\..\src\EmployeeMgmt.Infrastructure\EmployeeMgmt.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
