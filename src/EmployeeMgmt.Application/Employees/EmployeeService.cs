@@ -1,9 +1,12 @@
 using EmployeeMgmt.Core;
+using Microsoft.Extensions.Options;
 
 namespace EmployeeMgmt.Application.Employees;
 
-public sealed class EmployeeService(IEmployeeStore store) : IEmployeeService
+public sealed class EmployeeService(IEmployeeStore store, IOptions<PaginationOptions> paginationOptions) : IEmployeeService
 {
+    private readonly PaginationOptions _pagination = paginationOptions.Value;
+
     public async Task<PagedResult<EmployeeDto>> GetAllAsync(EmployeeQuery query, CancellationToken cancellationToken)
     {
         ValidateQuery(query);
@@ -69,12 +72,12 @@ public sealed class EmployeeService(IEmployeeStore store) : IEmployeeService
         return new EmployeeDto(employee.Id, employee.Name, employee.Salary, employee.DepartmentId, department?.Name);
     }
 
-    private static void ValidateQuery(EmployeeQuery query)
+    private void ValidateQuery(EmployeeQuery query)
     {
         if (query.Page < 1)
             throw new ArgumentException("Page must be greater than zero.", nameof(query));
-        if (query.PageSize is < 1 or > 100)
-            throw new ArgumentException("Page size must be between 1 and 100.", nameof(query));
+        if (query.PageSize < 1 || query.PageSize > _pagination.MaxPageSize)
+            throw new ArgumentException($"Page size must be between 1 and {_pagination.MaxPageSize}.", nameof(query));
         if (query.SortBy is not ("name" or "salary" or "id"))
             throw new ArgumentException("SortBy must be name, salary, or id.", nameof(query));
     }

@@ -1,0 +1,9 @@
+flowchart LR
+    Client --> ExceptionHandlingMiddleware
+    ExceptionHandlingMiddleware --> RequestLoggingMiddleware
+    RequestLoggingMiddleware --> Routing
+    Routing --> Authentication
+    Authentication --> Authorization
+    Authorization --> Controller
+    Controller --> ApplicationService
+    ApplicationService --> Store
