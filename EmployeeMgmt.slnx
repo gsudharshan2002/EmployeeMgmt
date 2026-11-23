@@ -1,5 +1,7 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/EmployeeMgmt.Api/EmployeeMgmt.Api.csproj" />
+    <Project Path="src/EmployeeMgmt.Application/EmployeeMgmt.Application.csproj" />
     <Project Path="src/EmployeeMgmt.App/EmployeeMgmt.App.csproj" />
     <Project Path="src/EmployeeMgmt.Core/EmployeeMgmt.Core.csproj" />
   </Folder>

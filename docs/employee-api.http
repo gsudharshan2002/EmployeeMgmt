@@ -1,0 +1,34 @@
+@baseUrl = https://localhost:7001
+
+### Create a department (201 Created)
+POST {{baseUrl}}/api/departments
+Content-Type: application/json
+
+{
+  "name": "Engineering"
+}
+
+### Create an employee (201 Created; set the department ID from the previous response)
+POST {{baseUrl}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "Alice",
+  "salary": 85000,
+  "departmentId": 1
+}
+
+### List employees with search, sorting, and pagination (200 OK)
+GET {{baseUrl}}/api/employees?search=ali&sortBy=salary&descending=true&page=1&pageSize=10
+
+### Get a missing employee (404 Not Found)
+GET {{baseUrl}}/api/employees/99999
+
+### Invalid employee (400 Bad Request)
+POST {{baseUrl}}/api/employees
+Content-Type: application/json
+
+{
+  "name": "",
+  "salary": -1
+}
